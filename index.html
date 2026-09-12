@@ -237,22 +237,71 @@
   }
   .hint{font-size:.78rem;color:var(--ink-faint);margin-top:.4rem;line-height:1.5;}
 
-  .tally{
-    margin-top:1.4rem;
+  .listhead{
+    margin-top:2.4rem;
     display:flex;
     align-items:baseline;
-    gap:.5em;
-    font-family:'IBM Plex Mono', monospace;
-    color:var(--ink-soft);
-    font-size:.8rem;
+    justify-content:space-between;
+    gap:1rem;
   }
-  .tally b{
+  .listhead h2{
     font-family:'Fraunces', serif;
-    font-size:1.3rem;
-    color:var(--ink);
-    font-variant-numeric:tabular-nums;
     font-weight:600;
+    font-size:1.3rem;
+    margin:0;
   }
+  .listhead .count{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.8rem;
+    color:var(--ink-soft);
+    font-variant-numeric:tabular-nums;
+  }
+  .listhead button{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.76rem;
+    background:none;
+    border:1px solid var(--line);
+    color:var(--ink-soft);
+    border-radius:20px;
+    padding:.3rem .75rem;
+    cursor:pointer;
+  }
+  .listhead button:hover{color:var(--ink);border-color:var(--ink-soft);}
+
+  .entries{margin-top:1rem;display:flex;flex-direction:column;gap:.7rem;}
+  .entry{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-left:3px solid var(--ink-faint);
+    border-radius:3px;
+    padding:.85rem 1rem;
+  }
+  .entry.bug{border-left-color:var(--redline);}
+  .entry.idea{border-left-color:var(--blue);}
+  .entry-top{
+    display:flex;
+    align-items:baseline;
+    gap:.6rem;
+    flex-wrap:wrap;
+    margin-bottom:.3rem;
+  }
+  .chip{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.68rem;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    padding:.1rem .45rem;
+    border-radius:3px;
+  }
+  .chip.bug{background:var(--redline-soft);color:var(--redline-ink);}
+  .chip.idea{background:var(--blue-soft);color:var(--blue);}
+  .entry-title{font-weight:500;flex:1;min-width:0;}
+  .entry-when{font-family:'IBM Plex Mono', monospace;font-size:.72rem;color:var(--ink-faint);white-space:nowrap;}
+  .entry-body{font-size:.92rem;color:var(--ink-soft);line-height:1.5;white-space:pre-line;word-break:break-word;}
+  .entry-link{display:inline-block;margin-top:.4rem;font-size:.78rem;color:var(--blue);text-decoration:none;}
+  .entry-link:hover{text-decoration:underline;}
+  .empty,.loading,.err{font-size:.88rem;color:var(--ink-faint);padding:1rem 0;}
+  .err{color:var(--redline-ink);}
 
   footer{
     margin-top:2.2rem;
@@ -316,22 +365,21 @@
       </div>
 
       <div class="actions">
-        <a class="btn btn-primary" id="sendBtn" href="#" target="_blank" rel="noopener">Отправить в Telegram</a>
-        <button type="button" class="btn btn-ghost" id="copyBtn">Скопировать текст</button>
+        <button type="button" class="btn btn-primary" id="sendBtn">Добавить в список</button>
       </div>
-
-      <div class="out" id="outWrap" hidden>
-        <label for="outText">Готовый текст</label>
-        <textarea id="outText" readonly></textarea>
-        <p class="hint">Если кнопка выше не открыла Telegram — скопируй текст отсюда и вставь сам.</p>
-      </div>
+      <p class="hint" id="submitHint"></p>
     </form>
   </div>
 
-  <div class="tally"><b id="tallyN">0</b> отправлено с этого телефона сегодня</div>
+  <div class="listhead">
+    <h2>Список</h2>
+    <span class="count"><span id="countN">&hellip;</span> записей</span>
+    <button type="button" id="refreshBtn">Обновить</button>
+  </div>
+  <div class="entries" id="entries"><p class="loading">Загружаю&hellip;</p></div>
 
   <footer>
-    Страница ничего не хранит и не запоминает — просто собирает текст и открывает Telegram, где ты сам выбираешь чат. Счётчик выше живёт только в этом браузере, для остальных он не виден. Скрин или видео прикрепи в то же сообщение в Telegram после отправки текста.
+    Кнопка открывает страницу нового issue в GitHub-репозитории проекта с уже заполненным текстом — жми там «Submit new issue» (если не залогинен в GitHub, попросит войти или завести бесплатный аккаунт — один раз). После этого запись сама появится в списке выше при обновлении. Скрин или видео можно приложить прямо туда же, как файл в issue.
   </footer>
 </div>
 
@@ -365,61 +413,122 @@
     });
   });
 
-  function buildText(){
+  var REPO = 'Unick-q/rumo-redline';
+
+  function buildIssue(){
     var screen = document.getElementById('screen').value.trim();
     var desc = document.getElementById('desc').value.trim();
     var link = document.getElementById('link').value.trim();
-    var tag = state.type === 'bug' ? '[БАГ]' : '[ИДЕЯ]';
-    var lines = [tag + ' rumo.cz v13'];
-    if (screen) lines.push('Экран: ' + screen);
-    if (state.type === 'bug') lines.push('Серьёзность: ' + state.sev);
-    lines.push((state.type === 'bug' ? 'Что случилось: ' : 'Идея: ') + (desc || '—'));
-    if (link) lines.push('Скрин/видео: ' + link);
-    return lines.join('\n');
-  }
+    var isBug = state.type === 'bug';
 
-  function bumpTally(){
-    var key = 'redline-tally-' + new Date().toISOString().slice(0,10);
-    var n = parseInt(localStorage.getItem(key) || '0', 10) + 1;
-    try { localStorage.setItem(key, String(n)); } catch(e){}
-    document.getElementById('tallyN').textContent = n;
-  }
+    var bodyLines = [];
+    if (screen) bodyLines.push('Экран: ' + screen);
+    if (isBug) bodyLines.push('Серьёзность: ' + state.sev);
+    bodyLines.push((isBug ? 'Что случилось: ' : 'Идея: ') + (desc || '—'));
+    if (link) bodyLines.push('Скрин/видео: ' + link);
 
-  function loadTally(){
-    var key = 'redline-tally-' + new Date().toISOString().slice(0,10);
-    var n = parseInt(localStorage.getItem(key) || '0', 10);
-    document.getElementById('tallyN').textContent = n;
+    var titleSource = (desc || screen || 'без описания').slice(0, 70);
+    var title = (isBug ? '[Баг] ' : '[Идея] ') + titleSource;
+
+    return { title: title, body: bodyLines.join('\n'), label: isBug ? 'bug' : 'idea' };
   }
-  loadTally();
 
   var sendBtn = document.getElementById('sendBtn');
-  var copyBtn = document.getElementById('copyBtn');
-  var outWrap = document.getElementById('outWrap');
-  var outText = document.getElementById('outText');
+  var submitHint = document.getElementById('submitHint');
 
   sendBtn.addEventListener('click', function(){
-    var text = buildText();
-    var linkVal = document.getElementById('link').value.trim() || 'https://rumo.cz/en';
-    sendBtn.href = 'https://t.me/share/url?url=' + encodeURIComponent(linkVal) + '&text=' + encodeURIComponent(text);
-    outText.value = text;
-    outWrap.hidden = false;
-    bumpTally();
+    var issue = buildIssue();
+    var url = 'https://github.com/' + REPO + '/issues/new'
+      + '?title=' + encodeURIComponent(issue.title)
+      + '&body=' + encodeURIComponent(issue.body)
+      + '&labels=' + encodeURIComponent(issue.label);
+    window.open(url, '_blank', 'noopener');
+    submitHint.textContent = 'Открыл GitHub в новой вкладке — там жми «Submit new issue», потом вернись сюда и обнови список.';
+    setTimeout(loadList, 6000);
   });
 
-  copyBtn.addEventListener('click', function(){
-    var text = buildText();
-    outText.value = text;
-    outWrap.hidden = false;
-    try {
-      navigator.clipboard.writeText(text);
-      copyBtn.textContent = 'Скопировано';
-    } catch(e) {
-      outText.select();
-      copyBtn.textContent = 'Выделено ниже — Ctrl/Cmd+C';
+  window.addEventListener('focus', loadList);
+
+  var entriesEl = document.getElementById('entries');
+  var countEl = document.getElementById('countN');
+  document.getElementById('refreshBtn').addEventListener('click', loadList);
+
+  function timeAgo(iso){
+    var d = new Date(iso);
+    var diffMin = Math.round((Date.now() - d.getTime()) / 60000);
+    if (diffMin < 1) return 'только что';
+    if (diffMin < 60) return diffMin + ' мин назад';
+    var diffH = Math.round(diffMin / 60);
+    if (diffH < 24) return diffH + ' ч назад';
+    return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  }
+
+  function renderList(issues){
+    entriesEl.innerHTML = '';
+    if (!issues.length){
+      entriesEl.innerHTML = '<p class="empty">Пока пусто — первая запись появится здесь.</p>';
+      countEl.textContent = '0';
+      return;
     }
-    setTimeout(function(){ copyBtn.textContent = 'Скопировать текст'; }, 2200);
-    bumpTally();
-  });
+    countEl.textContent = String(issues.length);
+    issues.forEach(function(issue){
+      var labels = (issue.labels || []).map(function(l){ return (l.name || l); });
+      var type = labels.indexOf('idea') !== -1 ? 'idea' : 'bug';
+
+      var entry = document.createElement('div');
+      entry.className = 'entry ' + type;
+
+      var top = document.createElement('div');
+      top.className = 'entry-top';
+      var chip = document.createElement('span');
+      chip.className = 'chip ' + type;
+      chip.textContent = type === 'idea' ? 'идея' : 'баг';
+      var title = document.createElement('span');
+      title.className = 'entry-title';
+      title.textContent = issue.title;
+      var when = document.createElement('span');
+      when.className = 'entry-when';
+      when.textContent = timeAgo(issue.created_at);
+      top.appendChild(chip);
+      top.appendChild(title);
+      top.appendChild(when);
+
+      var body = document.createElement('div');
+      body.className = 'entry-body';
+      body.textContent = issue.body || '';
+
+      var link = document.createElement('a');
+      link.className = 'entry-link';
+      link.href = issue.html_url;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.textContent = 'Открыть на GitHub →';
+
+      entry.appendChild(top);
+      entry.appendChild(body);
+      entry.appendChild(link);
+      entriesEl.appendChild(entry);
+    });
+  }
+
+  var loading = false;
+  function loadList(){
+    if (loading) return;
+    loading = true;
+    fetch('https://api.github.com/repos/' + REPO + '/issues?state=all&per_page=50&sort=created&direction=desc', {
+      headers: { Accept: 'application/vnd.github+json' }
+    })
+      .then(function(res){
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function(issues){ renderList(issues); })
+      .catch(function(e){
+        entriesEl.innerHTML = '<p class="err">Не получилось загрузить список (' + e.message + '). Нажми «Обновить».</p>';
+      })
+      .finally(function(){ loading = false; });
+  }
+  loadList();
 })();
 </script>
 
