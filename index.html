@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rumo Redline</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --paper:#eceeed;
+    --paper-raised:#f7f8f7;
+    --ink:#1c232a;
+    --ink-soft:#57626c;
+    --ink-faint:#8b959b;
+    --line:#cdd3d3;
+    --redline:#a83527;
+    --redline-soft:#f2ded9;
+    --redline-ink:#7c2519;
+    --blue:#335e8c;
+    --blue-soft:#dde6ee;
+    --focus:#335e8c;
+    --shadow: 0 1px 0 rgba(28,35,42,.05);
+    font-synthesis: none;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#15181a;
+      --paper-raised:#1c2023;
+      --ink:#e8eae9;
+      --ink-soft:#a1aaad;
+      --ink-faint:#6c7578;
+      --line:#31373a;
+      --redline:#e0785f;
+      --redline-soft:#3a2621;
+      --redline-ink:#f3ab97;
+      --blue:#7fa8d1;
+      --blue-soft:#20303f;
+      --shadow: 0 1px 0 rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#15181a;
+    --paper-raised:#1c2023;
+    --ink:#e8eae9;
+    --ink-soft:#a1aaad;
+    --ink-faint:#6c7578;
+    --line:#31373a;
+    --redline:#e0785f;
+    --redline-soft:#3a2621;
+    --redline-ink:#f3ab97;
+    --blue:#7fa8d1;
+    --blue-soft:#20303f;
+    --shadow: 0 1px 0 rgba(0,0,0,.4);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .page{
+    max-width:640px;
+    margin:0 auto;
+    padding:2.4rem 1.25rem 4rem;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono', ui-monospace, monospace;
+    font-size:.7rem;
+    letter-spacing:.09em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    display:flex;
+    align-items:baseline;
+    gap:.5em;
+    flex-wrap:wrap;
+  }
+  .eyebrow b{color:var(--redline);font-weight:500;}
+  h1{
+    font-family:'Fraunces', Georgia, serif;
+    font-optical-sizing:auto;
+    font-weight:600;
+    font-size:clamp(2rem,7vw,2.5rem);
+    line-height:1.05;
+    margin:.35em 0 .15em;
+    text-wrap:balance;
+    letter-spacing:-.01em;
+  }
+  .sub{
+    font-size:.98rem;
+    color:var(--ink-soft);
+    max-width:34em;
+    line-height:1.5;
+    margin:0 0 1.6rem;
+  }
+  .facts{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.4rem .9rem;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.78rem;
+    color:var(--ink-soft);
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+    padding:.65rem 0;
+    margin-bottom:2rem;
+  }
+  .facts a{color:var(--blue);text-decoration:none;border-bottom:1px solid transparent;}
+  .facts a:hover{border-bottom-color:var(--blue);}
+  .facts span b{color:var(--ink);font-weight:500;}
+
+  .sheet{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:3px;
+    box-shadow:var(--shadow);
+    position:relative;
+  }
+  .sheet::before{
+    content:"";
+    position:absolute;
+    inset:0 0 auto 0;
+    height:6px;
+    background:repeating-linear-gradient(90deg, var(--redline) 0 10px, transparent 10px 18px);
+    opacity:.5;
+    border-radius:3px 3px 0 0;
+  }
+  form{padding:1.6rem 1.4rem 1.4rem;}
+
+  .field{margin-bottom:1.25rem;}
+  .field:last-of-type{margin-bottom:0;}
+  label{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.72rem;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-bottom:.5rem;
+  }
+  input[type="text"],input[type="url"],textarea{
+    width:100%;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:1rem;
+    color:var(--ink);
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:.7rem .8rem;
+    line-height:1.4;
+  }
+  input::placeholder,textarea::placeholder{color:var(--ink-faint);}
+  input:focus,textarea:focus,button:focus-visible,.toggle button:focus-visible{
+    outline:2px solid var(--focus);
+    outline-offset:1px;
+  }
+  textarea{min-height:5.2rem;resize:vertical;}
+
+  .toggle{display:flex;gap:.5rem;}
+  .toggle button{
+    flex:1;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.82rem;
+    padding:.65rem .5rem;
+    border-radius:4px;
+    border:1px solid var(--line);
+    background:var(--paper);
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .toggle button[aria-pressed="true"]{
+    border-color:var(--redline);
+    color:var(--redline-ink);
+    background:var(--redline-soft);
+    font-weight:500;
+  }
+  .toggle button.idea[aria-pressed="true"]{
+    border-color:var(--blue);
+    color:var(--blue);
+    background:var(--blue-soft);
+  }
+
+  .pills{display:flex;flex-wrap:wrap;gap:.5rem;}
+  .pills button{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:.85rem;
+    padding:.5rem .85rem;
+    border-radius:20px;
+    border:1px solid var(--line);
+    background:var(--paper);
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .pills button[aria-pressed="true"]{
+    border-color:var(--redline);
+    color:var(--redline-ink);
+    background:var(--redline-soft);
+    font-weight:500;
+  }
+
+  .actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.7rem;
+    margin-top:1.6rem;
+    padding-top:1.2rem;
+    border-top:1px solid var(--line);
+  }
+  .btn{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:.94rem;
+    font-weight:500;
+    padding:.75rem 1.1rem;
+    border-radius:5px;
+    border:1px solid transparent;
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:.5em;
+  }
+  .btn-primary{background:var(--redline);color:#fff;}
+  .btn-primary:hover{background:var(--redline-ink);}
+  .btn-ghost{background:transparent;border-color:var(--line);color:var(--ink-soft);}
+  .btn-ghost:hover{border-color:var(--ink-soft);color:var(--ink);}
+
+  .out{margin-top:1.2rem;}
+  .out textarea{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:.82rem;
+    color:var(--ink-soft);
+    min-height:4.4rem;
+    background:var(--paper);
+  }
+  .hint{font-size:.78rem;color:var(--ink-faint);margin-top:.4rem;line-height:1.5;}
+
+  .tally{
+    margin-top:1.4rem;
+    display:flex;
+    align-items:baseline;
+    gap:.5em;
+    font-family:'IBM Plex Mono', monospace;
+    color:var(--ink-soft);
+    font-size:.8rem;
+  }
+  .tally b{
+    font-family:'Fraunces', serif;
+    font-size:1.3rem;
+    color:var(--ink);
+    font-variant-numeric:tabular-nums;
+    font-weight:600;
+  }
+
+  footer{
+    margin-top:2.2rem;
+    font-size:.8rem;
+    color:var(--ink-faint);
+    line-height:1.6;
+    max-width:34em;
+  }
+  [hidden]{display:none!important;}
+  @media (prefers-reduced-motion:no-preference){
+    .sheet{animation:rise .35s ease-out;}
+    @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <p class="eyebrow">QA-проход <b>&middot;</b> rumo.cz <b>&middot;</b> v13</p>
+  <h1>Redline</h1>
+  <p class="sub">Сегодня с 22:00 — пиши сюда всё, что выглядит не так, и всё, что хотелось бы добавить. Сначала баги, идеи потом.</p>
+
+  <div class="facts">
+    <span>Сайт: <a href="https://rumo.cz/en" target="_blank" rel="noopener">rumo.cz/en</a></span>
+    <span>Окно: <b>22:00&ndash;02:00</b></span>
+    <span>Логин: как прислали в Telegram</span>
+  </div>
+
+  <div class="sheet">
+    <form id="f">
+      <div class="field">
+        <label>Тип записи</label>
+        <div class="toggle" role="group" aria-label="Тип записи">
+          <button type="button" class="bug" data-type="bug" aria-pressed="true">Баг</button>
+          <button type="button" class="idea" data-type="idea" aria-pressed="false">Идея</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="screen">Экран или ссылка</label>
+        <input type="text" id="screen" placeholder="например: /en/search, карточка объекта, форма Odhad">
+      </div>
+
+      <div class="field">
+        <label for="desc" id="descLabel">Что случилось</label>
+        <textarea id="desc" placeholder="например: фильтр по цене сбрасывается после смены сортировки"></textarea>
+      </div>
+
+      <div class="field" id="severityField">
+        <label>Серьёзность</label>
+        <div class="pills" role="group" aria-label="Серьёзность">
+          <button type="button" data-sev="Косметика" aria-pressed="false">Косметика</button>
+          <button type="button" data-sev="Мешает" aria-pressed="true">Мешает</button>
+          <button type="button" data-sev="Блокирует" aria-pressed="false">Блокирует</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="link">Ссылка на скрин или видео (необязательно)</label>
+        <input type="url" id="link" placeholder="можно оставить пустым — скрин добавишь прямо в Telegram">
+      </div>
+
+      <div class="actions">
+        <a class="btn btn-primary" id="sendBtn" href="#" target="_blank" rel="noopener">Отправить в Telegram</a>
+        <button type="button" class="btn btn-ghost" id="copyBtn">Скопировать текст</button>
+      </div>
+
+      <div class="out" id="outWrap" hidden>
+        <label for="outText">Готовый текст</label>
+        <textarea id="outText" readonly></textarea>
+        <p class="hint">Если кнопка выше не открыла Telegram — скопируй текст отсюда и вставь сам.</p>
+      </div>
+    </form>
+  </div>
+
+  <div class="tally"><b id="tallyN">0</b> отправлено с этого телефона сегодня</div>
+
+  <footer>
+    Страница ничего не хранит и не запоминает — просто собирает текст и открывает Telegram, где ты сам выбираешь чат. Счётчик выше живёт только в этом браузере, для остальных он не виден. Скрин или видео прикрепи в то же сообщение в Telegram после отправки текста.
+  </footer>
+</div>
+
+<script>
+(function(){
+  var state = { type: 'bug', sev: 'Мешает' };
+
+  var toggleBtns = document.querySelectorAll('.toggle button');
+  var sevField = document.getElementById('severityField');
+  var descLabel = document.getElementById('descLabel');
+  var descInput = document.getElementById('desc');
+
+  toggleBtns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      state.type = btn.dataset.type;
+      toggleBtns.forEach(function(b){ b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'); });
+      var isBug = state.type === 'bug';
+      sevField.hidden = !isBug;
+      descLabel.textContent = isBug ? 'Что случилось' : 'В чём идея';
+      descInput.placeholder = isBug
+        ? 'например: фильтр по цене сбрасывается после смены сортировки'
+        : 'например: было бы удобно сортировать сравнение по цене за м²';
+    });
+  });
+
+  var sevBtns = document.querySelectorAll('.pills button');
+  sevBtns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      state.sev = btn.dataset.sev;
+      sevBtns.forEach(function(b){ b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'); });
+    });
+  });
+
+  function buildText(){
+    var screen = document.getElementById('screen').value.trim();
+    var desc = document.getElementById('desc').value.trim();
+    var link = document.getElementById('link').value.trim();
+    var tag = state.type === 'bug' ? '[БАГ]' : '[ИДЕЯ]';
+    var lines = [tag + ' rumo.cz v13'];
+    if (screen) lines.push('Экран: ' + screen);
+    if (state.type === 'bug') lines.push('Серьёзность: ' + state.sev);
+    lines.push((state.type === 'bug' ? 'Что случилось: ' : 'Идея: ') + (desc || '—'));
+    if (link) lines.push('Скрин/видео: ' + link);
+    return lines.join('\n');
+  }
+
+  function bumpTally(){
+    var key = 'redline-tally-' + new Date().toISOString().slice(0,10);
+    var n = parseInt(localStorage.getItem(key) || '0', 10) + 1;
+    try { localStorage.setItem(key, String(n)); } catch(e){}
+    document.getElementById('tallyN').textContent = n;
+  }
+
+  function loadTally(){
+    var key = 'redline-tally-' + new Date().toISOString().slice(0,10);
+    var n = parseInt(localStorage.getItem(key) || '0', 10);
+    document.getElementById('tallyN').textContent = n;
+  }
+  loadTally();
+
+  var sendBtn = document.getElementById('sendBtn');
+  var copyBtn = document.getElementById('copyBtn');
+  var outWrap = document.getElementById('outWrap');
+  var outText = document.getElementById('outText');
+
+  sendBtn.addEventListener('click', function(){
+    var text = buildText();
+    var linkVal = document.getElementById('link').value.trim() || 'https://rumo.cz/en';
+    sendBtn.href = 'https://t.me/share/url?url=' + encodeURIComponent(linkVal) + '&text=' + encodeURIComponent(text);
+    outText.value = text;
+    outWrap.hidden = false;
+    bumpTally();
+  });
+
+  copyBtn.addEventListener('click', function(){
+    var text = buildText();
+    outText.value = text;
+    outWrap.hidden = false;
+    try {
+      navigator.clipboard.writeText(text);
+      copyBtn.textContent = 'Скопировано';
+    } catch(e) {
+      outText.select();
+      copyBtn.textContent = 'Выделено ниже — Ctrl/Cmd+C';
+    }
+    setTimeout(function(){ copyBtn.textContent = 'Скопировать текст'; }, 2200);
+    bumpTally();
+  });
+})();
+</script>
+
+</body>
+</html>
